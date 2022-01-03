@@ -2,7 +2,7 @@ package com.lr_soft.fidget_ball
 
 import android.graphics.PointF
 
-class Segment(val start: PointF, val end: PointF) {
+class Segment(val start: PointF, val end: PointF, val bounceCoefficient: Float) {
     private val vector: PointF
 
     init {
@@ -17,11 +17,11 @@ class Segment(val start: PointF, val end: PointF) {
         val position = ball.position.toPointF()
         val velocity = ball.velocity
 
-        val velocityProjection = velocity dotProduct vector
+        val velocityProjection = velocity crossProduct vector
         if (velocityProjection == 0f) {
             return -1f
         }
-        val signedDistance = (velocity - start) crossProduct vector
+        val signedDistance = (position - start) crossProduct vector
         val timeAfterContingence = (signedDistance + ball.radius) / velocityProjection
         val timeAfterCenterIsOnLine = signedDistance / velocityProjection
 
@@ -30,14 +30,15 @@ class Segment(val start: PointF, val end: PointF) {
         }
 
         val contigencePoint = position - velocity * timeAfterCenterIsOnLine
-        val insideCheck = (start - contigencePoint) crossProduct (contigencePoint - end)
-        if (insideCheck >= 0) {
+        val contigencePointInsideCheck = (start - contigencePoint) dotProduct (contigencePoint - end)
+        if (contigencePointInsideCheck >= 0) {
             // The ball collides at the contigence point
             return timeAfterContingence
         }
 
         val closestSegmentEnd = listOf(start, end).minBy { dist(it, contigencePoint) }!!
-        TODO()
+        // TODO()
+        return -1f
     }
 
     fun adjustBallPositionAndVelocity(ball: Ball, timeAfterCollision: Float) {
@@ -45,10 +46,9 @@ class Segment(val start: PointF, val end: PointF) {
         val velocity = ball.velocity
 
         val parallelVelocity = velocity projectOnto vector
-        val perpendicularVector = PointF(-vector.y, vector.x)
-        val perpendicularVelocity = velocity projectOnto perpendicularVector
+        val perpendicularVelocity = velocity projectOnto vector.perpendicular()
 
-        val correctedVelocity = parallelVelocity - perpendicularVelocity
+        val correctedVelocity = (parallelVelocity - perpendicularVelocity) * bounceCoefficient
         val positionAtCollision = position - velocity * timeAfterCollision
         val correctedPosition = positionAtCollision + correctedVelocity * timeAfterCollision
 

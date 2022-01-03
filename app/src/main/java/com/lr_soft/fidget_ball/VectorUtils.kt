@@ -31,6 +31,10 @@ infix fun PointF.projectOnto(other: PointF): PointF {
     return other * (this dotProduct other)
 }
 
+fun PointF.perpendicular(): PointF {
+    return PointF(-y, x)
+}
+
 fun dist(a: PointF, b: PointF): Float {
     return hypot(a.x - b.x, a.y - b.y)
 }

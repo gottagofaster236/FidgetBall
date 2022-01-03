@@ -7,7 +7,8 @@ import android.graphics.RectF
 
 class Box(
     private val bounds: RectF,
-    facingOutwards: Boolean = true,
+    private val facingOutwards: Boolean = true,
+    bounceCoefficient: Float,
     color: Int
 ) : Obstacle {
     private val paint = Paint().apply {
@@ -18,23 +19,25 @@ class Box(
 
     init {
         val segments = listOf(
-            Segment(PointF(bounds.left, bounds.bottom), PointF(bounds.right, bounds.bottom)),
-            Segment(PointF(bounds.right, bounds.bottom), PointF(bounds.right, bounds.top)),
-            Segment(PointF(bounds.right, bounds.top), PointF(bounds.left, bounds.top)),
-            Segment(PointF(bounds.left, bounds.top), PointF(bounds.left, bounds.bottom))
+            Segment(PointF(bounds.left, bounds.bottom), PointF(bounds.right, bounds.bottom), bounceCoefficient),
+            Segment(PointF(bounds.right, bounds.bottom), PointF(bounds.right, bounds.top), bounceCoefficient),
+            Segment(PointF(bounds.right, bounds.top), PointF(bounds.left, bounds.top), bounceCoefficient),
+            Segment(PointF(bounds.left, bounds.top), PointF(bounds.left, bounds.bottom), bounceCoefficient)
         )
 
         if (facingOutwards) {
             this.segments = segments
         } else {
             this.segments = segments.map { segment ->
-                Segment(segment.end, segment.start)
+                Segment(segment.end, segment.start, segment.bounceCoefficient)
             }
         }
     }
 
     override fun draw(canvas: Canvas) {
-        canvas.drawRect(bounds, paint)
+        if (facingOutwards) {
+            canvas.drawRect(bounds, paint)
+        }
     }
 
     override fun adjustBallPositionAndVelocity(ball: Ball, timeSinceLastStep: Float) {
