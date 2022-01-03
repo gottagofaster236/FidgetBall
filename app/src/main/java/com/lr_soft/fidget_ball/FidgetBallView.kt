@@ -1,5 +1,6 @@
 package com.lr_soft.fidget_ball
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -12,7 +13,21 @@ class FidgetBallView(context: Context): View(context) {
         isAntiAlias = true
     }
 
+    private var physicsContainer: PhysicsContainer? = null
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        val physicsContainer = physicsContainer
+        if (
+            physicsContainer == null ||
+            physicsContainer.width != width ||
+            physicsContainer.height != height
+        ) {
+            // noinspection DrawAllocation
+            this.physicsContainer = PhysicsContainer(width, height)
+        }
+    }
+
     override fun onDraw(canvas: Canvas) {
-        canvas.drawCircle(300f, 300f, 100f, paint)
+        physicsContainer?.draw(canvas)
     }
 }
