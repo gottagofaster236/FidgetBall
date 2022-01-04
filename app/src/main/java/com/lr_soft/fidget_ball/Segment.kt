@@ -14,19 +14,19 @@ class Segment(val start: PointF, val end: PointF, val bounceCoefficient: Float) 
      * Returns a negative value or NaN if the ball has not yet collided with the segment.
      */
     fun getTimeAfterCollision(ball: Ball): Float {
-        val position = ball.position.toPointF()
+        val position = ball.position
         val velocity = ball.velocity
 
         val velocityProjection = velocity crossProduct vector
         if (velocityProjection == 0f) {
-            return -1f
+            return -Float.MAX_VALUE
         }
         val signedDistance = (position - start) crossProduct vector
         val timeAfterContingence = (signedDistance + ball.radius) / velocityProjection
         val timeAfterCenterIsOnLine = signedDistance / velocityProjection
 
         if (timeAfterContingence < 0) {
-            return -1f
+            return -Float.MAX_VALUE
         }
 
         val contigencePoint = position - velocity * timeAfterCenterIsOnLine
@@ -38,17 +38,17 @@ class Segment(val start: PointF, val end: PointF, val bounceCoefficient: Float) 
 
         val closestSegmentEnd = listOf(start, end).minBy { dist(it, contigencePoint) }!!
         // TODO()
-        return -1f
+        return -Float.MAX_VALUE
     }
 
     fun adjustBallPositionAndVelocity(ball: Ball, timeAfterCollision: Float) {
-        val position = ball.position.toPointF()
+        val position = ball.position
         val velocity = ball.velocity
 
         val parallelVelocity = velocity projectOnto vector
         val perpendicularVelocity = velocity projectOnto vector.perpendicular()
 
-        val correctedVelocity = (parallelVelocity - perpendicularVelocity) * bounceCoefficient
+        val correctedVelocity = parallelVelocity - perpendicularVelocity * bounceCoefficient
         val positionAtCollision = position - velocity * timeAfterCollision
         val correctedPosition = positionAtCollision + correctedVelocity * timeAfterCollision
 

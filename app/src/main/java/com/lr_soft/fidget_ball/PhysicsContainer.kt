@@ -10,7 +10,7 @@ import java.util.*
 
 class PhysicsContainer(val width: Int, val height: Int) {
     private val ball = Ball(
-        position = ConcurrentPointF(width / 2f, height / 2f),
+        position = PointF(width / 2f, height / 2f),
         velocity = PointF(width * 0.1f, width * 0.1f),
         radius = width * 0.05f
     )
@@ -65,16 +65,18 @@ class PhysicsContainer(val width: Int, val height: Int) {
         applyGravity(timeSinceLastStep)
         applyVelocity(timeSinceLastStep)
         fixCollision(timeSinceLastStep)
+
+        ball.updatePositionForDraw()
     }
 
     private fun applyGravity(timeSinceLastStep: Float) {
-        val g = width * 0.2f
+        val g = width * 0.8f
         ball.velocity.y += timeSinceLastStep * g
     }
 
     private fun applyVelocity(timeSinceLastStep: Float) {
         ball.position.set(
-            ball.position.toPointF() + ball.velocity * timeSinceLastStep
+            ball.position + ball.velocity * timeSinceLastStep
         )
     }
 

@@ -46,7 +46,7 @@ class Box(
             segment to segment.getTimeAfterCollision(ball)
         }.filter { (_, timeAfterIntersection) ->
             // NaN will return false for each of the comparisons
-            timeSinceLastStep > timeAfterIntersection && timeAfterIntersection > 0
+            timeSinceLastStep > timeAfterIntersection && timeAfterIntersection >= 0
         }.minBy(Pair<Segment, Float>::second) ?: return
 
         segment.adjustBallPositionAndVelocity(ball, timeAfterCollision)

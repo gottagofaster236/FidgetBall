@@ -7,45 +7,40 @@ import android.graphics.PointF
 import java.util.concurrent.atomic.AtomicLong
 
 class Ball(
-    val position: ConcurrentPointF,
+    val position: PointF,
     val velocity: PointF,
     val radius: Float,
     color: Int = Color.BLUE
 ) {
+    private val positionForDraw = ConcurrentPointF(position)
+
     private val paint = Paint().apply {
         this.color = color
         this.isAntiAlias = true
     }
 
+    fun updatePositionForDraw() {
+        positionForDraw.set(position)
+    }
+
     fun draw(canvas: Canvas) {
+        val position = positionForDraw.get()
         canvas.drawCircle(position.x, position.y, radius, paint)
     }
 }
 
-class ConcurrentPointF(x: Float, y: Float) {
-    var x: Float = x
-        @Synchronized get
-        @Synchronized set
-
-    var y: Float = y
-        @Synchronized get
-        @Synchronized set
-
-    constructor() : this(0f, 0f)
-
-    constructor(pointF: PointF) : this(pointF.x, pointF.y)
+class ConcurrentPointF(pointF: PointF) {
+    private var x: Float = pointF.x
+    private var y: Float = pointF.y
 
     @Synchronized
-    fun set(x: Float, y: Float) {
-        this.x = x
-        this.y = y
-    }
-
     fun set(pointF: PointF) {
-        set(pointF.x, pointF.y)
+        x = pointF.x
+        y = pointF.y
     }
 
-    fun toPointF(): PointF {
+    @Synchronized
+    fun get(): PointF {
         return PointF(x, y)
     }
 }
