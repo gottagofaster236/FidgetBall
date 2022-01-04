@@ -41,14 +41,13 @@ class Box(
     }
 
     override fun adjustBallPositionAndVelocity(ball: Ball, timeSinceLastStep: Float) {
-        // TODO there may be two of those
-        val (segment, timeAfterCollision) = segments.map { segment ->
+        segments.map { segment ->
             segment to segment.getTimeAfterCollision(ball)
         }.filter { (_, timeAfterIntersection) ->
             // NaN will return false for each of the comparisons
-            timeSinceLastStep > timeAfterIntersection && timeAfterIntersection >= 0
-        }.minBy(Pair<Segment, Float>::second) ?: return
-
-        segment.adjustBallPositionAndVelocity(ball, timeAfterCollision)
+            1.1f * timeSinceLastStep > timeAfterIntersection && timeAfterIntersection >= 0
+        }.forEach { (segment, timeAfterCollision) ->
+            segment.adjustBallPositionAndVelocity(ball, timeAfterCollision)
+        }
     }
 }

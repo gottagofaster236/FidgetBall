@@ -11,7 +11,7 @@ import java.util.*
 class PhysicsContainer(val width: Int, val height: Int) {
     private val ball = Ball(
         position = PointF(width / 2f, height / 2f),
-        velocity = PointF(width * 0.1f, width * 0.1f),
+        velocity = PointF(width * 1f, -width * 3f),
         radius = width * 0.05f
     )
 
@@ -22,7 +22,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
             Box(
                 bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
                 facingOutwards = false,
-                bounceCoefficient = 1f,
+                bounceCoefficient = 0.7f,
                 color = Color.BLACK
             )
         )
