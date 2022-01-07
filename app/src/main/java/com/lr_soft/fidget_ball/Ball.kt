@@ -10,7 +10,8 @@ class Ball(
     val position: PointF,
     val velocity: PointF,
     val radius: Float,
-    color: Int = Color.BLUE
+    color: Int = Color.BLUE,
+    var applyPhysics: Boolean = false
 ) {
     private val positionForDraw = ConcurrentPointF(position)
 

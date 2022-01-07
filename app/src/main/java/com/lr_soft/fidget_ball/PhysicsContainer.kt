@@ -9,15 +9,25 @@ import android.util.Log
 import java.util.*
 
 class PhysicsContainer(val width: Int, val height: Int) {
-    private val ball = Ball(
-        position = PointF(width / 2f, height / 2f),
-        velocity = PointF(width * 1f, -width * 3f),
-        radius = width * 0.05f
-    )
+    val balls = mutableListOf<Ball>()
 
     private val obstacles: MutableList<Obstacle> = mutableListOf()
 
     init {
+        balls.addAll(listOf(
+            Ball(
+                position = PointF(width / 2f, height / 2f),
+                velocity = PointF(width * 1f, -width * 3f),
+                radius = width * 0.05f,
+                applyPhysics = true
+            ),
+            Ball(
+                position = PointF(width / 2f, height / 2f),
+                velocity = PointF(-width * 2f, width * 1.5f),
+                radius = width * 0.05f
+            )
+        ))
+
         obstacles.add(
             Box(
                 bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
@@ -29,7 +39,9 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     fun draw(canvas: Canvas) {
-        ball.draw(canvas)
+        for (ball in balls) {
+            ball.draw(canvas)
+        }
         for (obstacle in obstacles) {
             obstacle.draw(canvas)
         }
@@ -62,27 +74,32 @@ class PhysicsContainer(val width: Int, val height: Int) {
         val timeSinceLastStep = (currentTime - lastPhysicsStepTime) / 1000f
         lastPhysicsStepTime = currentTime
 
+        balls.filter { it.applyPhysics }.forEach {
+            it.physicsStep(timeSinceLastStep)
+        }
+    }
+
+    private fun Ball.physicsStep(timeSinceLastStep: Float) {
         applyGravity(timeSinceLastStep)
         applyVelocity(timeSinceLastStep)
         fixCollision(timeSinceLastStep)
-
-        ball.updatePositionForDraw()
+        updatePositionForDraw()
     }
 
-    private fun applyGravity(timeSinceLastStep: Float) {
+    private fun Ball.applyGravity(timeSinceLastStep: Float) {
         val g = width * 0.8f
-        ball.velocity.y += timeSinceLastStep * g
+        velocity.y += timeSinceLastStep * g
     }
 
-    private fun applyVelocity(timeSinceLastStep: Float) {
-        ball.position.set(
-            ball.position + ball.velocity * timeSinceLastStep
+    private fun Ball.applyVelocity(timeSinceLastStep: Float) {
+        position.set(
+            position + velocity * timeSinceLastStep
         )
     }
 
-    private fun fixCollision(timeSinceLastStep: Float) {
+    private fun Ball.fixCollision(timeSinceLastStep: Float) {
         for (obstacle in obstacles) {
-            obstacle.adjustBallPositionAndVelocity(ball, timeSinceLastStep)
+            obstacle.adjustBallPositionAndVelocity(this, timeSinceLastStep)
         }
     }
 }
