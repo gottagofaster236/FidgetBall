@@ -22,6 +22,14 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            kotlinOptions {
+                freeCompilerArgs += [
+                    '-Xno-param-assertions',
+                    '-Xno-call-assertions',
+                    '-Xno-receiver-assertions'
+                ]
+            }
         }
     }
     compileOptions {
