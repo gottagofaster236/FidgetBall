@@ -4,9 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.PointF
-import android.view.MotionEvent
-import android.view.VelocityTracker
-import android.view.View
+import android.os.Build
+import android.view.*
 
 class FidgetBallView(context: Context): View(context) {
     private var physicsContainer: PhysicsContainer? = null
@@ -20,27 +19,37 @@ class FidgetBallView(context: Context): View(context) {
             physicsContainer.height != height
         ) {
             physicsContainer?.stopPhysics()
-            // noinspection DrawAllocation
-            this.physicsContainer = PhysicsContainer(width, height).apply {
-                if (hasWindowFocus()) {
-                    startPhysics()
-                }
+            @Suppress("DrawAllocation")
+            this.physicsContainer = PhysicsContainer(width, height)
+            if (hasWindowFocus()) {
+                startPhysics()
             }
         }
     }
 
     override fun onDraw(canvas: Canvas) {
-        postDelayed(::invalidate, 16)
+        invalidate()
         physicsContainer?.draw(canvas)
     }
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
         if (hasWindowFocus) {
-            physicsContainer?.startPhysics()
+            startPhysics()
         } else {
             physicsContainer?.stopPhysics()
         }
+    }
+
+    private fun startPhysics() {
+        val display: Display? = if (Build.VERSION.SDK_INT >= 30) {
+            context.display
+        } else {
+            @Suppress("DEPRECATION")
+            (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
+        }
+        val refreshRate = display?.refreshRate ?: 60f
+        physicsContainer?.startPhysics(refreshRate)
     }
 
     @SuppressLint("ClickableViewAccessibility", "Recycle")

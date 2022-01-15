@@ -6,6 +6,7 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.os.SystemClock
 import java.util.*
+import kotlin.math.ceil
 
 class PhysicsContainer(val width: Int, val height: Int) {
     private val balls = mutableListOf<Ball>()
@@ -50,16 +51,18 @@ class PhysicsContainer(val width: Int, val height: Int) {
 
     private var physicsTaskTimer: Timer? = null
 
-    fun startPhysics() {
+    fun startPhysics(displayRefreshRate: Float) {
         stopPhysics()
         lastPhysicsStepTime = SystemClock.uptimeMillis()
+
+        val period = (1000 / displayRefreshRate).toLong().coerceAtLeast(1)
 
         physicsTaskTimer = Timer().apply {
             scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
                     physicsStep()
                 }
-            }, 0L, 16L)
+            }, 0L, period)
         }
     }
 
