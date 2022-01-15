@@ -4,14 +4,13 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
-import java.util.concurrent.atomic.AtomicLong
 
 class Ball(
     val position: PointF,
     val velocity: PointF,
     val radius: Float,
-    color: Int = Color.BLUE,
-    var applyPhysics: Boolean = false
+    var applyPhysics: Boolean = false,
+    color: Int = Color.BLUE
 ) {
     private val positionForDraw = ConcurrentPointF(position)
 

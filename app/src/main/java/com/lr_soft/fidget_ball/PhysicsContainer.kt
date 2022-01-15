@@ -5,16 +5,17 @@ import android.graphics.Color
 import android.graphics.PointF
 import android.graphics.RectF
 import android.os.SystemClock
-import android.util.Log
 import java.util.*
 
 class PhysicsContainer(val width: Int, val height: Int) {
-    val balls = mutableListOf<Ball>()
+    private val balls = mutableListOf<Ball>()
+
+    private var currentNewBall: Ball? = null
 
     private val obstacles: MutableList<Obstacle> = mutableListOf()
 
     init {
-        balls.addAll(listOf(
+        /*balls.addAll(listOf(
             Ball(
                 position = PointF(width / 2f, height / 2f),
                 velocity = PointF(width * 1f, -width * 3f),
@@ -26,7 +27,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
                 velocity = PointF(-width * 2f, width * 1.5f),
                 radius = width * 0.05f
             )
-        ))
+        ))*/
 
         obstacles.add(
             Box(
@@ -101,5 +102,32 @@ class PhysicsContainer(val width: Int, val height: Int) {
         for (obstacle in obstacles) {
             obstacle.adjustBallPositionAndVelocity(this, timeSinceLastStep)
         }
+    }
+
+    fun createNewCurrentBall(position: PointF) {
+        balls.remove(currentNewBall)
+        currentNewBall = Ball(
+            position = position,
+            velocity = PointF(),
+            radius = width * 0.05f,
+            applyPhysics = false
+        ).also { balls.add(it) }
+    }
+
+    fun moveCurrentBallToPosition(position: PointF) {
+        currentNewBall?.apply {
+            this.position.set(position)
+            this.position.x = this.position.x.coerceIn(radius..width - radius)
+            this.position.y = this.position.y.coerceIn(radius..height - radius)
+            updatePositionForDraw()
+        }
+    }
+
+    fun addCurrentBall(velocity: PointF) {
+        currentNewBall?.apply {
+            this.velocity.set(velocity)
+            applyPhysics = true
+        }
+        currentNewBall = null
     }
 }
