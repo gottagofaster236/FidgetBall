@@ -36,7 +36,7 @@ class Segment(val start: PointF, val end: PointF, val bounceCoefficient: Float) 
             return timeAfterContingence
         }
 
-        val closestSegmentEnd = listOf(start, end).minBy { dist(it, contigencePoint) }!!
+        val closestSegmentEnd = listOf(start, end).minByOrNull { dist(it, contigencePoint) }!!
         // TODO()
         return -Float.MAX_VALUE
     }
