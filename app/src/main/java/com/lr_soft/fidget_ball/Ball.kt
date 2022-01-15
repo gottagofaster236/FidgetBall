@@ -7,11 +7,13 @@ import android.graphics.PointF
 
 class Ball(
     val position: PointF,
-    val velocity: PointF,
     val radius: Float,
-    var applyPhysics: Boolean = false,
     color: Int = Color.BLUE
 ) {
+    val velocity = PointF()
+
+    var applyPhysics = false
+
     private val positionForDraw = ConcurrentPointF(position)
 
     private val paint = Paint().apply {

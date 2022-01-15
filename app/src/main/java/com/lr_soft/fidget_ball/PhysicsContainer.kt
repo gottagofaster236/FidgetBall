@@ -16,20 +16,6 @@ class PhysicsContainer(val width: Int, val height: Int) {
     private val obstacles: MutableList<Obstacle> = mutableListOf()
 
     init {
-        /*balls.addAll(listOf(
-            Ball(
-                position = PointF(width / 2f, height / 2f),
-                velocity = PointF(width * 1f, -width * 3f),
-                radius = width * 0.05f,
-                applyPhysics = true
-            ),
-            Ball(
-                position = PointF(width / 2f, height / 2f),
-                velocity = PointF(-width * 2f, width * 1.5f),
-                radius = width * 0.05f
-            )
-        ))*/
-
         obstacles.add(
             Box(
                 bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
@@ -111,9 +97,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
         balls.remove(currentNewBall)
         currentNewBall = Ball(
             position = position,
-            velocity = PointF(),
             radius = width * 0.05f,
-            applyPhysics = false
         ).also { balls.add(it) }
     }
 
