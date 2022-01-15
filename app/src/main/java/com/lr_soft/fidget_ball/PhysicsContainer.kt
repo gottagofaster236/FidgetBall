@@ -15,12 +15,14 @@ class PhysicsContainer(val width: Int, val height: Int) {
 
     private val obstacles: MutableList<Obstacle> = mutableListOf()
 
+    private val unit = (width + height) / 2
+
     init {
         obstacles.add(
             Box(
                 bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
                 facingOutwards = false,
-                bounceCoefficient = 0.7f,
+                bounceCoefficient = 0.6f,
                 color = Color.BLACK
             )
         )
@@ -77,7 +79,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     private fun Ball.applyGravity(timeSinceLastStep: Float) {
-        val g = width * 0.8f
+        val g = unit * 1.2f
         velocity.y += timeSinceLastStep * g
     }
 
@@ -97,7 +99,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
         balls.remove(currentNewBall)
         currentNewBall = Ball(
             position = position,
-            radius = width * 0.05f,
+            radius = unit * 0.04f,
         ).also { balls.add(it) }
     }
 
