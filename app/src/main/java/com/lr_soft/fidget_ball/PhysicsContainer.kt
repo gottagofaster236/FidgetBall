@@ -100,14 +100,17 @@ class PhysicsContainer(val width: Int, val height: Int) {
         currentNewBall = Ball(
             position = position,
             radius = unit * 0.04f,
-        ).also { balls.add(it) }
+        ).apply {
+            makeSureIsInBounds()
+            updatePositionForDraw()
+            balls.add(this)
+        }
     }
 
     fun moveCurrentBallToPosition(position: PointF) {
         currentNewBall?.apply {
             this.position.set(position)
-            this.position.x = this.position.x.coerceIn(radius..width - radius)
-            this.position.y = this.position.y.coerceIn(radius..height - radius)
+            makeSureIsInBounds()
             updatePositionForDraw()
         }
     }
@@ -118,5 +121,10 @@ class PhysicsContainer(val width: Int, val height: Int) {
             applyPhysics = true
         }
         currentNewBall = null
+    }
+
+    private fun Ball.makeSureIsInBounds() {
+        position.x = position.x.coerceIn(radius..width - radius)
+        position.y = position.y.coerceIn(radius..height - radius)
     }
 }
