@@ -84,7 +84,7 @@ class FidgetBallView(context: Context): View(context) {
                 val velocity = with(velocityTracker) {
                     // TODO use the two-argument version of the function to limit the max speed.
                     computeCurrentVelocity(1000)  // Compute the speed in pixels per second.
-                    PointF(xVelocity, yVelocity)
+                    PointF(xVelocity, yVelocity) * 0.7f
                 }
                 physicsContainer.addCurrentBall(velocity)
             }
