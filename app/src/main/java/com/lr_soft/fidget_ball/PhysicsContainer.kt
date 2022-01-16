@@ -6,10 +6,10 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.os.SystemClock
 import java.util.*
-import kotlin.math.ceil
+import java.util.concurrent.CopyOnWriteArrayList
 
 class PhysicsContainer(val width: Int, val height: Int) {
-    private val balls = mutableListOf<Ball>()
+    private val balls = CopyOnWriteArrayList<Ball>()
 
     private var currentNewBall: Ball? = null
 
