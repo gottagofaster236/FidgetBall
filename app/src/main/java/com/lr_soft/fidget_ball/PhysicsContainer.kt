@@ -68,6 +68,9 @@ class PhysicsContainer(val width: Int, val height: Int) {
 
         balls.filter { it.applyPhysics }.forEach {
             it.physicsStep(timeSinceLastStep)
+            if (it.shouldBeDeleted()) {
+                balls.remove(it)
+            }
         }
     }
 
@@ -103,6 +106,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
         ).apply {
             makeSureIsInBounds()
             updatePositionForDraw()
+            creationTime = SystemClock.uptimeMillis()
             balls.add(this)
         }
     }
