@@ -83,8 +83,9 @@ class FidgetBallView(context: Context): View(context) {
                 physicsContainer.moveCurrentBallToPosition(position)
                 val velocity = with(velocityTracker) {
                     // TODO use the two-argument version of the function to limit the max speed.
-                    computeCurrentVelocity(1000)  // Compute the speed in pixels per second.
-                    PointF(xVelocity, yVelocity) * 0.7f
+                    // Compute the speed in pixels per second.
+                    computeCurrentVelocity(1000)
+                    PointF(xVelocity, yVelocity) * VELOCITY_COEFFICIENT
                 }
                 physicsContainer.addCurrentBall(velocity)
             }
@@ -92,5 +93,13 @@ class FidgetBallView(context: Context): View(context) {
             else -> return false
         }
         return true
+    }
+
+    private companion object Constants {
+        /**
+         * The actual finger movement is usually too fast,
+         * so a decreasing coefficient is used.
+         */
+        const val VELOCITY_COEFFICIENT = 0.7f
     }
 }

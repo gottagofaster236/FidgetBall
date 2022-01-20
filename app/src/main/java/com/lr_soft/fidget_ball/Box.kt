@@ -45,9 +45,14 @@ class Box(
             segment to segment.getTimeAfterCollision(ball)
         }.filter { (_, timeAfterIntersection) ->
             // NaN will return false for each of the comparisons
-            1.1f * timeSinceLastStep > timeAfterIntersection && timeAfterIntersection >= 0
+            timeSinceLastStep > timeAfterIntersection / (1 + FLOAT_ACCEPTABLE_RELATIVE_ERROR)
+                && timeAfterIntersection >= 0
         }.forEach { (segment, timeAfterCollision) ->
             segment.adjustBallPositionAndVelocity(ball, timeAfterCollision)
         }
+    }
+
+    private companion object Constants {
+        const val FLOAT_ACCEPTABLE_RELATIVE_ERROR = 0.1f
     }
 }
