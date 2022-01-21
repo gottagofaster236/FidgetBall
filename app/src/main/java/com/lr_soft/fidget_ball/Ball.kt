@@ -22,7 +22,7 @@ class Ball(
      * The time at which the user released the ball.
      */
     @Volatile
-    var releaseTime: Long = 0
+    var releaseTime = Long.MAX_VALUE
 
     /**
      * [position] can contain intermediary results as the physics calculations are running.
@@ -44,7 +44,7 @@ class Ball(
     }
 
     private val pathPaint = Paint().apply {
-        color = pathColor
+        color = Color.TRANSPARENT
         isAntiAlias = true
         style = Paint.Style.STROKE
         strokeWidth = radius * PATH_WIDTH_RELATIVE_TO_RADIUS
@@ -98,10 +98,9 @@ class Ball(
     }
 
     private fun updatePathColor() {
-        if (!applyPhysics) {
-            return
-        }
-        val fadeoutPercentage = getTimeSinceRelease() / PATH_FADEOUT_LENGTH
+        val fadeoutPercentage =
+            (getTimeSinceRelease() / PATH_FADEOUT_LENGTH * PATH_INITIAL_ALPHA).coerceAtLeast(0f) +
+                    (1 - PATH_INITIAL_ALPHA)
         pathPaint.color = applyFadeout(pathColor, fadeoutPercentage)
     }
 
@@ -120,6 +119,7 @@ class Ball(
         const val BALL_FADEOUT_LENGTH = 2f
         const val PATH_FADEOUT_LENGTH = 0.75f
         const val PATH_WIDTH_RELATIVE_TO_RADIUS = 0.2f
+        const val PATH_INITIAL_ALPHA = 0.3f
     }
 }
 
