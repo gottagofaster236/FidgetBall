@@ -8,13 +8,14 @@ class Ball(
     val position: PointF,
     val radius: Float,
     private val color: Int = Color.BLUE,
-    private val pathColor: Int = Color.rgb(0, 200, 255)
+    private val pathColor: Int = Color.rgb(0, 200, 255),
 ) {
     val velocity = PointF()
 
     /**
      * If `false`, the ball's position and velocity aren't subject to the physics calculations.
      */
+    @Volatile
     var applyPhysics = false
         private set
 
@@ -56,6 +57,10 @@ class Ball(
     fun updatePositionOnScreen() {
         positionOnScreen.set(position)
         if (!applyPhysics && position != lastPathPoint) {
+            /**
+             * If applyPhysics if false, that means that this function was called from the UI thread
+             * (check the usages yourself).
+             */
             val midpoint = (position + lastPathPoint) * 0.5f
             path.quadTo(lastPathPoint.x, lastPathPoint.y, midpoint.x, midpoint.y)
             lastPathPoint.set(position)
