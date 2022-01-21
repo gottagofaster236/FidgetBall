@@ -27,14 +27,16 @@ class Ball(
     /**
      * [position] can contain intermediary results as the physics calculations are running.
      *
-     * On the contrary, [positionForDraw] has the position at the last finished physics step,
+     * On the contrary, [positionOnScreen] has the position at the last finished physics step,
      * that is safe to draw on screen,
      */
-    private val positionForDraw = ConcurrentPointF(position)
+    private val positionOnScreen = ConcurrentPointF(position)
 
     private val path = Path().apply {
         moveTo(position.x, position.y)
     }
+
+    private val lastPathPoint = PointF(position.x, position.y)
 
     private val paint = Paint().apply {
         color = this@Ball.color
@@ -51,10 +53,12 @@ class Ball(
     /**
      * Updates the current position of the ball on screen with the value in [position].
      */
-    fun updatePositionForDraw() {
-        positionForDraw.set(position)
-        if (!applyPhysics) {
-            path.lineTo(position.x, position.y)
+    fun updatePositionOnScreen() {
+        positionOnScreen.set(position)
+        if (!applyPhysics && position != lastPathPoint) {
+            val midpoint = (position + lastPathPoint) * 0.5f
+            path.quadTo(lastPathPoint.x, lastPathPoint.y, midpoint.x, midpoint.y)
+            lastPathPoint.set(position)
         }
     }
 
@@ -66,7 +70,7 @@ class Ball(
     }
 
     fun drawForeground(canvas: Canvas) {
-        val position = positionForDraw.get()
+        val position = positionOnScreen.get()
         updateDrawColor()
         canvas.drawCircle(position.x, position.y, radius, paint)
     }

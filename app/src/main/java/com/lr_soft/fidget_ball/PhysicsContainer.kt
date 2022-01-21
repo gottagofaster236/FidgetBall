@@ -84,7 +84,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
         applyGravity(timeSinceLastStep)
         applyVelocity(timeSinceLastStep)
         fixCollision(timeSinceLastStep)
-        updatePositionForDraw()
+        updatePositionOnScreen()
     }
 
     private fun Ball.applyGravity(timeSinceLastStep: Float) {
@@ -111,7 +111,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
             radius = unit * BALL_RADIUS,
         ).apply {
             makeSureIsInBounds()
-            updatePositionForDraw()
+            updatePositionOnScreen()
             balls.add(this)
         }
     }
@@ -120,7 +120,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
         currentNewBall?.apply {
             this.position.set(position)
             makeSureIsInBounds()
-            updatePositionForDraw()
+            updatePositionOnScreen()
         }
     }
 
