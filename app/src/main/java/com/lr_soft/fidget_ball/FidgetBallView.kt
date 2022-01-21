@@ -100,6 +100,6 @@ class FidgetBallView(context: Context): View(context) {
          * The actual finger movement is usually too fast,
          * so a decreasing coefficient is used.
          */
-        const val VELOCITY_COEFFICIENT = 0.7f
+        const val VELOCITY_COEFFICIENT = 0.65f
     }
 }
