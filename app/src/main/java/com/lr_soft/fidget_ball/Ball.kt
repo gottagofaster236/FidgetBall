@@ -1,16 +1,14 @@
 package com.lr_soft.fidget_ball
 
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PointF
+import android.graphics.*
 import android.os.SystemClock
 import kotlin.math.roundToInt
 
 class Ball(
     val position: PointF,
     val radius: Float,
-    private val color: Int = Color.BLUE
+    private val color: Int = Color.BLUE,
+    private val pathColor: Int = Color.rgb(0, 200, 255)
 ) {
     val velocity = PointF()
 
@@ -18,12 +16,13 @@ class Ball(
      * If `false`, the ball's position and velocity aren't subject to the physics calculations.
      */
     var applyPhysics = false
+        private set
 
     /**
      * The time at which the user released the ball.
      */
     @Volatile
-    var creationTime: Long = 0
+    var releaseTime: Long = 0
 
     /**
      * [position] can contain intermediary results as the physics calculations are running.
@@ -33,9 +32,20 @@ class Ball(
      */
     private val positionForDraw = ConcurrentPointF(position)
 
+    private val path = Path().apply {
+        moveTo(position.x, position.y)
+    }
+
     private val paint = Paint().apply {
         color = this@Ball.color
         isAntiAlias = true
+    }
+
+    private val pathPaint = Paint().apply {
+        color = pathColor
+        isAntiAlias = true
+        style = Paint.Style.STROKE
+        strokeWidth = radius * PATH_WIDTH_RELATIVE_TO_RADIUS
     }
 
     /**
@@ -43,40 +53,69 @@ class Ball(
      */
     fun updatePositionForDraw() {
         positionForDraw.set(position)
+        if (!applyPhysics) {
+            path.lineTo(position.x, position.y)
+        }
     }
 
-    fun draw(canvas: Canvas) {
+    fun drawBackground(canvas: Canvas) {
+        if (!applyPhysics || getTimeSinceRelease() <= PATH_FADEOUT_LENGTH) {
+            updatePathColor()
+            canvas.drawPath(path, pathPaint)
+        }
+    }
+
+    fun drawForeground(canvas: Canvas) {
         val position = positionForDraw.get()
         updateDrawColor()
         canvas.drawCircle(position.x, position.y, radius, paint)
     }
 
     fun shouldBeDeleted(): Boolean {
-        return getTimeSinceCreation() > TIME_BEFORE_DELETION
+        return getTimeSinceRelease() > TIME_BEFORE_DELETION
+    }
+
+    fun startApplyingPhysics() {
+        applyPhysics = true
+        releaseTime = SystemClock.uptimeMillis()
     }
 
     private fun updateDrawColor() {
-        val timeSinceCreation = getTimeSinceCreation()
-        val fadeoutStartTime = TIME_BEFORE_DELETION - FADEOUT_LENGTH
-
-        val timeSinceFadeoutStart = timeSinceCreation - fadeoutStartTime
+        if (!applyPhysics) {
+            return
+        }
+        val fadeoutStartTime = TIME_BEFORE_DELETION - BALL_FADEOUT_LENGTH
+        val timeSinceFadeoutStart = getTimeSinceRelease() - fadeoutStartTime
         if (timeSinceFadeoutStart <= 0) {
             return
         }
-        val fadeoutPercentage = 1 - timeSinceFadeoutStart / FADEOUT_LENGTH
-        val alpha = (fadeoutPercentage * 255f).roundToInt().coerceIn(0..255)
-        val colorWithoutAlpha = color and ((1 shl 3 * 8) - 1)
-        val drawColor = (alpha shl 3 * 8) or colorWithoutAlpha
-        paint.color = drawColor
+        val fadeoutPercentage = timeSinceFadeoutStart / BALL_FADEOUT_LENGTH
+        paint.color = applyFadeout(color, fadeoutPercentage)
     }
 
-    private fun getTimeSinceCreation(): Float {
-        return (SystemClock.uptimeMillis() - creationTime) / 1000f
+    private fun updatePathColor() {
+        if (!applyPhysics) {
+            return
+        }
+        val fadeoutPercentage = getTimeSinceRelease() / PATH_FADEOUT_LENGTH
+        pathPaint.color = applyFadeout(pathColor, fadeoutPercentage)
+    }
+
+    private fun applyFadeout(color: Int, fadeoutPercentage: Float): Int {
+        val alpha = ((1 - fadeoutPercentage) * 255f).roundToInt().coerceIn(0..255)
+        val colorWithoutAlpha = color and ((1 shl 3 * 8) - 1)
+        return (alpha shl 3 * 8) or colorWithoutAlpha
+    }
+
+    private fun getTimeSinceRelease(): Float {
+        return (SystemClock.uptimeMillis() - releaseTime) / 1000f
     }
 
     private companion object Constants {
         const val TIME_BEFORE_DELETION = 5f
-        const val FADEOUT_LENGTH = 2f
+        const val BALL_FADEOUT_LENGTH = 2f
+        const val PATH_FADEOUT_LENGTH = 0.75f
+        const val PATH_WIDTH_RELATIVE_TO_RADIUS = 0.2f
     }
 }
 

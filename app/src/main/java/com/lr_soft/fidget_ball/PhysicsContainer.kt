@@ -29,9 +29,15 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     fun draw(canvas: Canvas) {
+        // Make a copy of the list to avoid locking twice.
+        val balls = balls.toList()
         for (ball in balls) {
-            ball.draw(canvas)
+            ball.drawBackground(canvas)
         }
+        for (ball in balls) {
+            ball.drawForeground(canvas)
+        }
+
         for (obstacle in obstacles) {
             obstacle.draw(canvas)
         }
@@ -106,7 +112,6 @@ class PhysicsContainer(val width: Int, val height: Int) {
         ).apply {
             makeSureIsInBounds()
             updatePositionForDraw()
-            creationTime = SystemClock.uptimeMillis()
             balls.add(this)
         }
     }
@@ -122,7 +127,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
     fun addCurrentBall(velocity: PointF) {
         currentNewBall?.apply {
             this.velocity.set(velocity)
-            applyPhysics = true
+            startApplyingPhysics()
         }
         currentNewBall = null
     }
