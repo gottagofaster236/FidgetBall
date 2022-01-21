@@ -3,6 +3,7 @@ package com.lr_soft.fidget_ball
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.PointF
 import android.os.Build
 import android.view.*
@@ -10,6 +11,10 @@ import android.view.*
 class FidgetBallView(context: Context): View(context) {
     private var physicsContainer: PhysicsContainer? = null
     private var velocityTracker: VelocityTracker = VelocityTracker.obtain()
+
+    init {
+        setBackgroundColor(Color.WHITE)
+    }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         val physicsContainer = physicsContainer
