@@ -73,26 +73,30 @@ class FidgetBallView(context: Context): View(context) {
         }
 
         val physicsContainer = physicsContainer ?: return true
-        val position = PointF(event.x, event.y)
+        val actionPointerId = event.getPointerId(event.actionIndex)
+        val actionPosition = PointF(event.getX(event.actionIndex), event.getY(event.actionIndex))
 
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                physicsContainer.createNewCurrentBall(position)
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                physicsContainer.createCurrentBall(actionPointerId, actionPosition)
             }
 
-            MotionEvent.ACTION_MOVE -> {
-                physicsContainer.moveCurrentBallToPosition(position)
-            }
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                physicsContainer.moveCurrentBallToPosition(position)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_UP -> {
+                physicsContainer.moveCurrentBallToPosition(actionPointerId, actionPosition)
                 val velocity = with(velocityTracker) {
-                    // TODO use the two-argument version of the function to limit the max speed.
                     // Compute the speed in pixels per second.
                     computeCurrentVelocity(1000)
                     PointF(xVelocity, yVelocity) * VELOCITY_COEFFICIENT
                 }
-                physicsContainer.addCurrentBall(velocity)
+                physicsContainer.addCurrentBallToField(actionPointerId, velocity)
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                for (pointerIndex in 0 until event.pointerCount) {
+                    val pointerPosition = PointF(event.getX(pointerIndex), event.getY(pointerIndex))
+                    val pointerId = event.getPointerId(pointerIndex)
+                    physicsContainer.moveCurrentBallToPosition(pointerId, pointerPosition)
+                }
             }
 
             else -> return false
@@ -106,5 +110,6 @@ class FidgetBallView(context: Context): View(context) {
          * so a decreasing coefficient is used.
          */
         const val VELOCITY_COEFFICIENT = 0.65f
+        const val TAG = "FidgetBallView"
     }
 }
