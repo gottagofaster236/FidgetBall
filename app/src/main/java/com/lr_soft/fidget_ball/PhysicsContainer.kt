@@ -72,7 +72,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
         val timeSinceLastStep = (currentTime - lastPhysicsStepTime) / 1000f
         lastPhysicsStepTime = currentTime
 
-        balls.filter { it.applyPhysics }.forEach {
+        balls.filter(Ball::applyPhysics).forEach {
             it.physicsStep(timeSinceLastStep)
             if (it.shouldBeDeleted()) {
                 balls.remove(it)
