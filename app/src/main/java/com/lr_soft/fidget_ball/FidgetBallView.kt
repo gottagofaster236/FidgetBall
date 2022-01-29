@@ -10,7 +10,7 @@ import android.view.*
 
 class FidgetBallView(context: Context): View(context) {
     private var physicsContainer: PhysicsContainer? = null
-    private var velocityTracker: VelocityTracker = VelocityTracker.obtain()
+    private var velocityTrackerForPointerId = mutableMapOf<Int, VelocityTracker>()
 
     init {
         setBackgroundColor(Color.WHITE)
@@ -59,36 +59,28 @@ class FidgetBallView(context: Context): View(context) {
 
     @SuppressLint("ClickableViewAccessibility", "Recycle")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                velocityTracker.clear()
-                velocityTracker.addMovement(event)
-            }
-
-            MotionEvent.ACTION_MOVE -> velocityTracker.addMovement(event)
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {}
-
-            else -> return false
-        }
-
         val physicsContainer = physicsContainer ?: return true
-        val actionPointerId = event.getPointerId(event.actionIndex)
-        val actionPosition = PointF(event.getX(event.actionIndex), event.getY(event.actionIndex))
+        val actionIndex = event.actionIndex
+        val actionPointerId = event.getPointerId(actionIndex)
+        val actionPosition = PointF(event.getX(actionIndex), event.getY(actionIndex))
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                velocityTrackerForPointerId[actionPointerId] = VelocityTracker.obtain().apply {
+                    addMovement(event, actionIndex)
+                }
                 physicsContainer.createCurrentBall(actionPointerId, actionPosition)
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_UP -> {
                 physicsContainer.moveCurrentBallToPosition(actionPointerId, actionPosition)
-                val velocity = with(velocityTracker) {
+                val velocity = with(velocityTrackerForPointerId.getValue(actionPointerId)) {
                     // Compute the speed in pixels per second.
                     computeCurrentVelocity(1000)
                     PointF(xVelocity, yVelocity) * VELOCITY_COEFFICIENT
                 }
                 physicsContainer.addCurrentBallToField(actionPointerId, velocity)
+                velocityTrackerForPointerId.remove(actionPointerId)?.recycle()
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -96,12 +88,31 @@ class FidgetBallView(context: Context): View(context) {
                     val pointerPosition = PointF(event.getX(pointerIndex), event.getY(pointerIndex))
                     val pointerId = event.getPointerId(pointerIndex)
                     physicsContainer.moveCurrentBallToPosition(pointerId, pointerPosition)
+                    velocityTrackerForPointerId.getValue(pointerId).addMovement(event, pointerIndex)
                 }
             }
 
             else -> return false
         }
         return true
+    }
+
+    private fun VelocityTracker.addMovement(event: MotionEvent, pointerIndex: Int) {
+        val pointerIndexEvent = event.getEventForPointerIndex(pointerIndex)
+        addMovement(pointerIndexEvent)
+        pointerIndexEvent.recycle()
+    }
+
+    /**
+     * Returns an event containing the position of the specified [pointerIndex].
+     * Call `recycle()` on the event after using it.
+     *
+     * Based on [this answer from Stackoverflow](https://stackoverflow.com/a/49722416/6120487).
+     */
+    private fun MotionEvent.getEventForPointerIndex(pointerIndex: Int): MotionEvent {
+        return MotionEvent.obtain(
+            downTime, eventTime, actionMasked, getX(pointerIndex), getY(pointerIndex), metaState
+        )
     }
 
     private companion object Constants {

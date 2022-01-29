@@ -105,9 +105,6 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     fun createCurrentBall(id: Int, position: PointF) {
-        currentBalls[id]?.let {
-            balls.remove(it)
-        }
         currentBalls[id] = Ball(
             position = position,
             radius = unit * BALL_RADIUS,
@@ -119,9 +116,6 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     fun moveCurrentBallToPosition(id: Int, position: PointF) {
-        if (!currentBalls.containsKey(id)) {
-            createCurrentBall(id, position)
-        }
         currentBalls.getValue(id).apply {
             this.position.set(position)
             makeSureIsInBounds()
@@ -130,7 +124,7 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     fun addCurrentBallToField(id: Int, velocity: PointF) {
-        currentBalls[id]?.apply {
+        currentBalls.getValue(id).apply {
             this.velocity.set(velocity)
             startApplyingPhysics()
         }
