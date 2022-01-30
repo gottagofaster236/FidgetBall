@@ -6,9 +6,6 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import java.util.concurrent.ArrayBlockingQueue
 
-/**
- * @author https://github.com/gottagofaster236
- */
 class AsyncVibrator(context: Context) {
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
