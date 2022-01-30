@@ -84,18 +84,20 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         val timeSinceLastStep = (currentTime - lastPhysicsStepTime) / 1000f
         lastPhysicsStepTime = currentTime
 
-        balls.filter(Ball::applyPhysics).forEach {
-            it.physicsStep(timeSinceLastStep)
-            if (it.shouldBeDeleted()) {
-                balls.remove(it)
+        balls.filter(Ball::applyPhysics).forEachIndexed { index, ball ->
+            ball.physicsStep(
+                timeSinceLastStep, vibrateOnCollision = index < MAX_BALLS_VIBRATING
+            )
+            if (ball.shouldBeDeleted()) {
+                balls.remove(ball)
             }
         }
     }
 
-    private fun Ball.physicsStep(timeSinceLastStep: Float) {
+    private fun Ball.physicsStep(timeSinceLastStep: Float, vibrateOnCollision: Boolean = false) {
         applyGravity(timeSinceLastStep)
         applyVelocity(timeSinceLastStep)
-        fixCollision(timeSinceLastStep)
+        fixCollision(timeSinceLastStep, vibrateOnCollision)
         updatePositionOnScreen()
     }
 
@@ -110,13 +112,15 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         )
     }
 
-    private fun Ball.fixCollision(timeSinceLastStep: Float) {
+    private fun Ball.fixCollision(timeSinceLastStep: Float, vibrateOnCollision: Boolean) {
         val oldVelocity = PointF(velocity.x, velocity.y)
         for (obstacle in obstacles) {
             obstacle.adjustBallPositionAndVelocity(this, timeSinceLastStep)
         }
-        val velocityDifference = (velocity - oldVelocity).length() / unit
-        vibrate(velocityDifference)
+        if (vibrateOnCollision) {
+            val velocityDifference = (velocity - oldVelocity).length() / unit
+            vibrate(velocityDifference)
+        }
     }
 
     private fun vibrate(velocityDifference: Float) {
@@ -174,7 +178,8 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
     private companion object Constants {
         const val GRAVITY_ACCELERATION = 3f
         const val BALL_RADIUS = 0.045f
-        const val VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE = 15f
-        const val MAX_VIBRATION_LENGTH = 35L
+        const val VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE = 30f
+        const val MAX_VIBRATION_LENGTH = 50L
+        const val MAX_BALLS_VIBRATING = 7
     }
 }
