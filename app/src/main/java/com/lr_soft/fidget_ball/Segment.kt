@@ -22,23 +22,7 @@ class Segment(val start: PointF, val end: PointF, val bounceCoefficient: Float) 
             return -Float.MAX_VALUE
         }
         val signedDistance = (position - start) crossProduct vector
-        val timeAfterContingence = (signedDistance + ball.radius) / velocityProjection
-        val timeAfterCenterIsOnLine = signedDistance / velocityProjection
-
-        if (timeAfterContingence < 0) {
-            return -Float.MAX_VALUE
-        }
-
-        val contigencePoint = position - velocity * timeAfterCenterIsOnLine
-        val contigencePointInsideCheck = (start - contigencePoint) dotProduct (contigencePoint - end)
-        if (contigencePointInsideCheck >= 0 || true) {
-            // The ball collides at the contigence point
-            return timeAfterContingence
-        }
-
-        val closestSegmentEnd = listOf(start, end).minByOrNull { dist(it, contigencePoint) }!!
-        // TODO()
-        return -Float.MAX_VALUE
+        return (signedDistance + ball.radius) / velocityProjection
     }
 
     fun adjustBallPositionAndVelocity(ball: Ball, timeAfterCollision: Float) {
