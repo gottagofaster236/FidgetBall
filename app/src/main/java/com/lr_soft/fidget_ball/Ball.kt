@@ -122,7 +122,7 @@ class Ball(
     private companion object Constants {
         const val TIME_BEFORE_DELETION = 5f
         const val BALL_FADEOUT_LENGTH = 2f
-        const val PATH_FADEOUT_LENGTH = 0.75f
+        const val PATH_FADEOUT_LENGTH = 1f
         const val PATH_WIDTH_RELATIVE_TO_RADIUS = 0.2f
         const val PATH_INITIAL_ALPHA = 0.3f
     }
