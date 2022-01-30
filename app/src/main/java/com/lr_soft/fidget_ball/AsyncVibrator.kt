@@ -6,6 +6,10 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import java.util.concurrent.ArrayBlockingQueue
 
+/**
+ * Vibrator::vibrate can take up to 5 milliseconds.
+ * This helper class moves that call onto a background thread.
+ */
 class AsyncVibrator(context: Context) {
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
