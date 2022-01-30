@@ -104,12 +104,12 @@ class FidgetBallView(context: Context): View(context) {
         )
     }
 
-    private companion object Constants {
+    companion object Constants {
         /**
          * The actual finger movement is usually too fast,
          * so a decreasing coefficient is used.
          */
-        const val VELOCITY_COEFFICIENT = 0.65f
+        private const val VELOCITY_COEFFICIENT = 0.65f
         const val TAG = "FidgetBallView"
     }
 }

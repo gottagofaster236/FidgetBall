@@ -7,8 +7,6 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.os.Build
 import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.view.Display
 import android.view.WindowManager
 import java.util.*
@@ -26,7 +24,7 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
 
     private val refreshRate = context.displayRefreshRate
 
-    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val asyncVibrator = AsyncVibrator(context)
 
     init {
         obstacles.add(
@@ -69,11 +67,14 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
                 }
             }, 0L, period)
         }
+
+        asyncVibrator.start()
     }
 
     fun stopPhysics() {
         physicsTaskTimer?.cancel()
         physicsTaskTimer = null
+        asyncVibrator.stop()
     }
 
     private var lastPhysicsStepTime = 0L
@@ -122,23 +123,8 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         val lengthMs = (velocityDifference * VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE)
             .roundToLong()
             .coerceAtMost(MAX_VIBRATION_LENGTH)
-        vibrate(lengthMs)
-    }
-
-    private fun vibrate(lengthMs: Long) {
-        if (lengthMs <= 0) {
-            return
-        }
-        if (Build.VERSION.SDK_INT >= 26) {
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(
-                    lengthMs,
-                    VibrationEffect.DEFAULT_AMPLITUDE
-                )
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(lengthMs)
+        if (lengthMs > 0) {
+            asyncVibrator.vibrate(lengthMs)
         }
     }
 
@@ -188,7 +174,7 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
     private companion object Constants {
         const val GRAVITY_ACCELERATION = 3f
         const val BALL_RADIUS = 0.045f
-        const val VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE = 50f
-        const val MAX_VIBRATION_LENGTH = 50L
+        const val VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE = 15f
+        const val MAX_VIBRATION_LENGTH = 35L
     }
 }
