@@ -25,9 +25,9 @@ class FidgetBallView(context: Context): View(context) {
         ) {
             physicsContainer?.stopPhysics()
             @Suppress("DrawAllocation")
-            this.physicsContainer = PhysicsContainer(width, height)
+            this.physicsContainer = PhysicsContainer(context, width, height)
             if (hasWindowFocus()) {
-                startPhysics()
+                physicsContainer?.startPhysics()
             }
         }
     }
@@ -40,21 +40,10 @@ class FidgetBallView(context: Context): View(context) {
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
         if (hasWindowFocus) {
-            startPhysics()
+            physicsContainer?.startPhysics()
         } else {
             physicsContainer?.stopPhysics()
         }
-    }
-
-    private fun startPhysics() {
-        val display: Display? = if (Build.VERSION.SDK_INT >= 30) {
-            context.display
-        } else {
-            @Suppress("DEPRECATION")
-            (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
-        }
-        val refreshRate = display?.refreshRate ?: 60f
-        physicsContainer?.startPhysics(refreshRate)
     }
 
     @SuppressLint("ClickableViewAccessibility", "Recycle")

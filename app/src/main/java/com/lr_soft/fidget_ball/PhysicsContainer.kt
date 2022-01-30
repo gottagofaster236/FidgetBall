@@ -1,14 +1,21 @@
 package com.lr_soft.fidget_ball
 
+import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.PointF
 import android.graphics.RectF
+import android.os.Build
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.view.Display
+import android.view.WindowManager
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.roundToLong
 
-class PhysicsContainer(val width: Int, val height: Int) {
+class PhysicsContainer(context: Context, val width: Int, val height: Int) {
     private val balls = CopyOnWriteArrayList<Ball>()
 
     private var currentBalls = mutableMapOf<Int, Ball>()
@@ -16,6 +23,10 @@ class PhysicsContainer(val width: Int, val height: Int) {
     private val obstacles: MutableList<Obstacle> = mutableListOf()
 
     private val unit = (width + height) / 2
+
+    private val refreshRate = context.displayRefreshRate
+
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
     init {
         obstacles.add(
@@ -45,11 +56,11 @@ class PhysicsContainer(val width: Int, val height: Int) {
 
     private var physicsTaskTimer: Timer? = null
 
-    fun startPhysics(displayRefreshRate: Float) {
+    fun startPhysics() {
         stopPhysics()
         lastPhysicsStepTime = SystemClock.uptimeMillis()
 
-        val period = (1000 / displayRefreshRate).toLong().coerceAtLeast(1)
+        val period = (1000 / refreshRate).toLong().coerceAtLeast(1)
 
         physicsTaskTimer = Timer().apply {
             scheduleAtFixedRate(object : TimerTask() {
@@ -99,8 +110,35 @@ class PhysicsContainer(val width: Int, val height: Int) {
     }
 
     private fun Ball.fixCollision(timeSinceLastStep: Float) {
+        val oldVelocity = PointF(velocity.x, velocity.y)
         for (obstacle in obstacles) {
             obstacle.adjustBallPositionAndVelocity(this, timeSinceLastStep)
+        }
+        val velocityDifference = (velocity - oldVelocity).length() / unit
+        vibrate(velocityDifference)
+    }
+
+    private fun vibrate(velocityDifference: Float) {
+        val lengthMs = (velocityDifference * VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE)
+            .roundToLong()
+            .coerceAtMost(MAX_VIBRATION_LENGTH)
+        vibrate(lengthMs)
+    }
+
+    private fun vibrate(lengthMs: Long) {
+        if (lengthMs <= 0) {
+            return
+        }
+        if (Build.VERSION.SDK_INT >= 26) {
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    lengthMs,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(lengthMs)
         }
     }
 
@@ -136,8 +174,21 @@ class PhysicsContainer(val width: Int, val height: Int) {
         position.y = position.y.coerceIn(radius..height - radius)
     }
 
+    private val Context.displayRefreshRate: Float
+        get() {
+            val display: Display? = if (Build.VERSION.SDK_INT >= 30) {
+                display
+            } else {
+                @Suppress("DEPRECATION")
+                (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay
+            }
+            return display?.refreshRate ?: 60f
+        }
+
     private companion object Constants {
         const val GRAVITY_ACCELERATION = 3f
         const val BALL_RADIUS = 0.045f
+        const val VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE = 50f
+        const val MAX_VIBRATION_LENGTH = 50L
     }
 }
