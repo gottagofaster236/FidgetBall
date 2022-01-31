@@ -26,6 +26,11 @@ class Ball(
     var releaseTime = Long.MAX_VALUE
 
     /**
+     * The number of times that the ball has collided with a wall.
+     */
+    var collisionCount = 0
+
+    /**
      * [position] can contain intermediary results as the physics calculations are running.
      *
      * On the contrary, [positionOnScreen] has the position at the last finished physics step,

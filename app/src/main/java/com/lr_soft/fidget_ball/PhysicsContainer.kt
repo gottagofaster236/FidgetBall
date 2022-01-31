@@ -11,7 +11,6 @@ import android.view.Display
 import android.view.WindowManager
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.math.roundToLong
 
 class PhysicsContainer(context: Context, val width: Int, val height: Int) {
     private val balls = CopyOnWriteArrayList<Ball>()
@@ -85,9 +84,10 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         lastPhysicsStepTime = currentTime
 
         balls.filter(Ball::applyPhysics).forEachIndexed { index, ball ->
-            ball.physicsStep(
-                timeSinceLastStep, vibrateOnCollision = index < MAX_BALLS_VIBRATING
-            )
+            val vibrateOnCollision =
+                (index < MAX_BALLS_VIBRATING / 2 || balls.lastIndex - index < MAX_BALLS_VIBRATING / 2)
+                    && ball.collisionCount < MAX_VIBRATIONS_PER_BALL
+            ball.physicsStep(timeSinceLastStep, vibrateOnCollision)
             if (ball.shouldBeDeleted()) {
                 balls.remove(ball)
             }
@@ -119,16 +119,10 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         }
         if (vibrateOnCollision) {
             val velocityDifference = (velocity - oldVelocity).length() / unit
-            vibrate(velocityDifference)
-        }
-    }
-
-    private fun vibrate(velocityDifference: Float) {
-        val lengthMs = (velocityDifference * VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE)
-            .roundToLong()
-            .coerceAtMost(MAX_VIBRATION_LENGTH)
-        if (lengthMs > 0) {
-            asyncVibrator.vibrate(lengthMs)
+            if (velocityDifference >= VELOCITY_DIFFERENCE_VIBRATION_THRESHOLD) {
+                asyncVibrator.vibrate(VIBRATION_LENGTH)
+                collisionCount++
+            }
         }
     }
 
@@ -178,8 +172,9 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
     private companion object Constants {
         const val GRAVITY_ACCELERATION = 3f
         const val BALL_RADIUS = 0.045f
-        const val VIBRATION_LENGTH_TO_VELOCITY_DIFFERENCE = 30f
-        const val MAX_VIBRATION_LENGTH = 50L
-        const val MAX_BALLS_VIBRATING = 7
+        const val VELOCITY_DIFFERENCE_VIBRATION_THRESHOLD = 1f
+        const val VIBRATION_LENGTH = 30L
+        const val MAX_BALLS_VIBRATING = 10
+        const val MAX_VIBRATIONS_PER_BALL = 10
     }
 }
