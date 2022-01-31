@@ -1,6 +1,7 @@
 package com.lr_soft.fidget_ball
 
 import android.content.Context
+import android.media.AudioManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -16,6 +17,8 @@ class AsyncVibrator(context: Context) {
     private val vibrationRequestsQueue = ArrayBlockingQueue<Long>(VIBRATOR_QUEUE_CAPACITY)
 
     private var vibrationThread: Thread? = null
+
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     fun vibrate(lengthMs: Long) {
         vibrationRequestsQueue.offer(lengthMs)
@@ -36,6 +39,11 @@ class AsyncVibrator(context: Context) {
                 vibrationRequestsQueue.take()
             } catch (e: InterruptedException) {
                 break
+            }
+
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) {
+                // Don't vibrate if the user has muted their phone.
+                continue
             }
 
             if (Build.VERSION.SDK_INT >= 26) {
