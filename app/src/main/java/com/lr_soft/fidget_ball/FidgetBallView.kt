@@ -63,7 +63,8 @@ class FidgetBallView(context: Context): View(context) {
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_UP -> {
                 physicsContainer.moveCurrentBallToPosition(actionPointerId, actionPosition)
-                val velocity = with(velocityTrackerForPointerId.getValue(actionPointerId)) {
+                val velocityTracker = velocityTrackerForPointerId[actionPointerId] ?: return false
+                val velocity = with(velocityTracker) {
                     // Compute the speed in pixels per second.
                     computeCurrentVelocity(1000)
                     PointF(xVelocity, yVelocity) * VELOCITY_COEFFICIENT
@@ -77,7 +78,7 @@ class FidgetBallView(context: Context): View(context) {
                     val pointerPosition = PointF(event.getX(pointerIndex), event.getY(pointerIndex))
                     val pointerId = event.getPointerId(pointerIndex)
                     physicsContainer.moveCurrentBallToPosition(pointerId, pointerPosition)
-                    velocityTrackerForPointerId.getValue(pointerId).addMovement(event, pointerIndex)
+                    velocityTrackerForPointerId[pointerId]?.addMovement(event, pointerIndex)
                 }
             }
 
