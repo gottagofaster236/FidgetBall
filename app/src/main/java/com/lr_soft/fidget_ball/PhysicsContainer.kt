@@ -17,24 +17,17 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
 
     private var currentBalls = mutableMapOf<Int, Ball>()
 
-    private val obstacles: MutableList<Obstacle> = mutableListOf()
+    private val box = Box(
+        bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
+        bounceCoefficient = 0.6f,
+        color = Color.BLACK
+    )
 
     private val unit = (width + height) / 2
 
     private val refreshRate = context.displayRefreshRate
 
     private val asyncVibrator = AsyncVibrator(context)
-
-    init {
-        obstacles.add(
-            Box(
-                bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
-                facingOutwards = false,
-                bounceCoefficient = 0.6f,
-                color = Color.BLACK
-            )
-        )
-    }
 
     fun draw(canvas: Canvas) {
         // Make a copy of the list to avoid locking twice.
@@ -44,10 +37,6 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         }
         for (ball in balls) {
             ball.drawForeground(canvas)
-        }
-
-        for (obstacle in obstacles) {
-            obstacle.draw(canvas)
         }
     }
 
@@ -114,9 +103,8 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
 
     private fun Ball.fixCollision(timeSinceLastStep: Float, vibrateOnCollision: Boolean) {
         val oldVelocity = PointF(velocity.x, velocity.y)
-        for (obstacle in obstacles) {
-            obstacle.adjustBallPositionAndVelocity(this, timeSinceLastStep)
-        }
+        box.adjustBallPositionAndVelocity(this, timeSinceLastStep)
+
         if (vibrateOnCollision) {
             val velocityDifference = (velocity - oldVelocity).length() / unit
             if (velocityDifference >= VELOCITY_DIFFERENCE_VIBRATION_THRESHOLD) {
