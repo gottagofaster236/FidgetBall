@@ -1,18 +1,20 @@
 package com.lr_soft.fidget_ball
 
 import android.content.Context
+import android.content.Context.VIBRATOR_SERVICE
 import android.media.AudioManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import java.util.concurrent.ArrayBlockingQueue
 
 /**
- * Vibrator::vibrate can take up to 5 milliseconds.
+ * android.os.Vibrator::vibrate can take up to 5 milliseconds.
  * This helper class moves that call onto a background thread.
  */
 class AsyncVibrator(context: Context) {
-    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val vibrator = getVibrator(context)
 
     private val vibrationRequestsQueue = ArrayBlockingQueue<Long>(VIBRATOR_QUEUE_CAPACITY)
 
@@ -57,6 +59,17 @@ class AsyncVibrator(context: Context) {
                 @Suppress("DEPRECATION")
                 vibrator.vibrate(lengthMs)
             }
+        }
+    }
+
+    private fun getVibrator(context: Context): Vibrator {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
     }
 
