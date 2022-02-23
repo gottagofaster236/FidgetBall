@@ -16,6 +16,18 @@ class FidgetBallView(context: Context): View(context) {
         setBackgroundColor(Color.WHITE)
     }
 
+    override fun onDraw(canvas: Canvas) {
+        /**
+         * Make sure we're being drawn at the maximum possible FPS
+         * by calling [invalidate] immediately.
+         */
+        invalidate()
+        physicsContainer?.draw(canvas)
+    }
+
+    /**
+     * Handle the View size changes.
+     */
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         val physicsContainer = physicsContainer
         if (
@@ -26,15 +38,7 @@ class FidgetBallView(context: Context): View(context) {
             physicsContainer?.stopPhysics()
             @Suppress("DrawAllocation")
             this.physicsContainer = PhysicsContainer(context, width, height)
-            if (hasWindowFocus()) {
-                physicsContainer?.startPhysics()
-            }
         }
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        invalidate()
-        physicsContainer?.draw(canvas)
     }
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
@@ -53,35 +57,50 @@ class FidgetBallView(context: Context): View(context) {
         val actionPointerId = event.getPointerId(actionIndex)
         val actionPosition = PointF(event.getX(actionIndex), event.getY(actionIndex))
 
+        fun onActionDown() {
+            /**
+             * Add a new ball when the user touches the screen.
+             */
+            velocityTrackerForPointerId[actionPointerId] = VelocityTracker.obtain().apply {
+                addMovement(event, actionIndex)
+            }
+            physicsContainer.createCurrentBall(actionPointerId, actionPosition)
+        }
+
+        fun onActionUp() {
+            /**
+             * Calculate the speed and release the ball at that speed
+             * when the user lifts their finger.
+             */
+            physicsContainer.moveCurrentBallToPosition(actionPointerId, actionPosition)
+            val velocityTracker = velocityTrackerForPointerId[actionPointerId] ?: return
+            val velocity = with(velocityTracker) {
+                // Compute the speed in pixels per second.
+                computeCurrentVelocity(1000)
+                PointF(xVelocity, yVelocity) * VELOCITY_COEFFICIENT
+            }
+            physicsContainer.addCurrentBallToField(actionPointerId, velocity)
+            velocityTrackerForPointerId.remove(actionPointerId)?.recycle()
+        }
+
+        fun onActionMove() {
+            /**
+             * Move the corresponding ball if the user moves their finger.
+             */
+            for (pointerIndex in 0 until event.pointerCount) {
+                val pointerPosition = PointF(event.getX(pointerIndex), event.getY(pointerIndex))
+                val pointerId = event.getPointerId(pointerIndex)
+                physicsContainer.moveCurrentBallToPosition(pointerId, pointerPosition)
+                velocityTrackerForPointerId[pointerId]?.addMovement(event, pointerIndex)
+            }
+        }
+
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                velocityTrackerForPointerId[actionPointerId] = VelocityTracker.obtain().apply {
-                    addMovement(event, actionIndex)
-                }
-                physicsContainer.createCurrentBall(actionPointerId, actionPosition)
-            }
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_UP -> {
-                physicsContainer.moveCurrentBallToPosition(actionPointerId, actionPosition)
-                val velocityTracker = velocityTrackerForPointerId[actionPointerId] ?: return false
-                val velocity = with(velocityTracker) {
-                    // Compute the speed in pixels per second.
-                    computeCurrentVelocity(1000)
-                    PointF(xVelocity, yVelocity) * VELOCITY_COEFFICIENT
-                }
-                physicsContainer.addCurrentBallToField(actionPointerId, velocity)
-                velocityTrackerForPointerId.remove(actionPointerId)?.recycle()
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                for (pointerIndex in 0 until event.pointerCount) {
-                    val pointerPosition = PointF(event.getX(pointerIndex), event.getY(pointerIndex))
-                    val pointerId = event.getPointerId(pointerIndex)
-                    physicsContainer.moveCurrentBallToPosition(pointerId, pointerPosition)
-                    velocityTrackerForPointerId[pointerId]?.addMovement(event, pointerIndex)
-                }
-            }
-
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN ->
+                onActionDown()
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_UP ->
+                onActionUp()
+            MotionEvent.ACTION_MOVE -> onActionMove()
             else -> return false
         }
         return true

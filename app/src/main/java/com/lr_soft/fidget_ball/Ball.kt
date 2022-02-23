@@ -8,27 +8,9 @@ class Ball(
     val position: PointF,
     val radius: Float,
     private val color: Int = Color.BLUE,
-    private val pathColor: Int = Color.rgb(0, 200, 255),
+    private val trailColor: Int = Color.rgb(0, 200, 255),
 ) {
     val velocity = PointF()
-
-    /**
-     * If `false`, the ball's position and velocity aren't subject to the physics calculations.
-     */
-    @Volatile
-    var applyPhysics = false
-        private set
-
-    /**
-     * The time at which the user released the ball.
-     */
-    @Volatile
-    var releaseTime = Long.MAX_VALUE
-
-    /**
-     * The number of times that the ball has collided with a wall.
-     */
-    var collisionCount = 0
 
     /**
      * [position] can contain intermediary results as the physics calculations are running.
@@ -38,44 +20,46 @@ class Ball(
      */
     private val positionOnScreen = ConcurrentPointF(position)
 
-    private val path = Path().apply {
-        moveTo(position.x, position.y)
-    }
-
-    private val lastPathPoint = PointF(position.x, position.y)
-
     private val paint = Paint().apply {
         color = this@Ball.color
         isAntiAlias = true
     }
 
-    private val pathPaint = Paint().apply {
+    /**
+     * If `false`, the ball's position and velocity aren't subject to the physics calculations.
+     */
+    @Volatile
+    var applyPhysics = false
+        private set
+
+    /**
+     * The time at which the user released the ball into the playing field.
+     */
+    @Volatile
+    var releaseTime = Long.MAX_VALUE
+
+    /**
+     * The number of times that the ball has collided with a wall.
+     */
+    var collisionCount = 0
+
+    private val trail = Path().apply {
+        moveTo(position.x, position.y)
+    }
+
+    private val lastTrailPoint = PointF(position.x, position.y)
+
+    private val trailPaint = Paint().apply {
         color = Color.TRANSPARENT
         isAntiAlias = true
         style = Paint.Style.STROKE
         strokeWidth = radius * PATH_WIDTH_RELATIVE_TO_RADIUS
     }
 
-    /**
-     * Updates the current position of the ball on screen with the value in [position].
-     */
-    fun updatePositionOnScreen() {
-        positionOnScreen.set(position)
-        if (!applyPhysics && position != lastPathPoint) {
-            /**
-             * If applyPhysics if false, that means that this function was called from the UI thread
-             * (check the usages yourself).
-             */
-            val midpoint = (position + lastPathPoint) * 0.5f
-            path.quadTo(lastPathPoint.x, lastPathPoint.y, midpoint.x, midpoint.y)
-            lastPathPoint.set(position)
-        }
-    }
-
     fun drawBackground(canvas: Canvas) {
         if (!applyPhysics || getTimeSinceRelease() <= PATH_FADEOUT_LENGTH) {
             updatePathColor()
-            canvas.drawPath(path, pathPaint)
+            canvas.drawPath(trail, trailPaint)
         }
     }
 
@@ -85,13 +69,30 @@ class Ball(
         canvas.drawCircle(position.x, position.y, radius, paint)
     }
 
+    fun startApplyingPhysics() {
+        applyPhysics = true
+        releaseTime = SystemClock.uptimeMillis()
+    }
+
     fun shouldBeDeleted(): Boolean {
         return getTimeSinceRelease() > TIME_BEFORE_DELETION
     }
 
-    fun startApplyingPhysics() {
-        applyPhysics = true
-        releaseTime = SystemClock.uptimeMillis()
+    /**
+     * Updates the current position of the ball on screen with the value in [position].
+     */
+    fun updatePositionOnScreen() {
+        positionOnScreen.set(position)
+        if (!applyPhysics && position != lastTrailPoint) {
+            /**
+             * If [applyPhysics] if `false`, that means that this function was called from the UI thread
+             * (check the usages yourself). Thus it's safe to use make operations on the [trail].
+             * ([Path] can only be used from the UI thread).
+             */
+            val midpoint = (position + lastTrailPoint) * 0.5f
+            trail.quadTo(lastTrailPoint.x, lastTrailPoint.y, midpoint.x, midpoint.y)
+            lastTrailPoint.set(position)
+        }
     }
 
     private fun updateDrawColor() {
@@ -109,9 +110,9 @@ class Ball(
 
     private fun updatePathColor() {
         val fadeoutPercentage =
-            (getTimeSinceRelease() / PATH_FADEOUT_LENGTH * PATH_INITIAL_ALPHA).coerceAtLeast(0f) +
-                    (1 - PATH_INITIAL_ALPHA)
-        pathPaint.color = applyFadeout(pathColor, fadeoutPercentage)
+            (getTimeSinceRelease() / PATH_FADEOUT_LENGTH * PATH_INITIAL_ALPHA)
+                .coerceAtLeast(0f) + (1 - PATH_INITIAL_ALPHA)
+        trailPaint.color = applyFadeout(trailColor, fadeoutPercentage)
     }
 
     private fun applyFadeout(color: Int, fadeoutPercentage: Float): Int {

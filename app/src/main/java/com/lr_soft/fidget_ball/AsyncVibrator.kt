@@ -8,6 +8,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import java.util.concurrent.ArrayBlockingQueue
+import kotlin.concurrent.thread
 
 /**
  * android.os.Vibrator::vibrate can take up to 5 milliseconds.
@@ -27,7 +28,9 @@ class AsyncVibrator(context: Context) {
     }
 
     fun start() {
-        vibrationThread = Thread(::processVibrationRequests).apply(Thread::start)
+        vibrationThread = thread {
+            processVibrationRequests()
+        }
     }
 
     fun stop() {
@@ -43,22 +46,24 @@ class AsyncVibrator(context: Context) {
                 break
             }
 
-            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) == 0) {
-                // Don't vibrate if the user has muted their phone.
-                continue
+            if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > 0) {
+                // Vibrate if the user hasn't muted their phone.
+                vibrateImpl(lengthMs)
             }
+        }
+    }
 
-            if (Build.VERSION.SDK_INT >= 26) {
-                vibrator.vibrate(
-                    VibrationEffect.createOneShot(
-                        lengthMs,
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
+    private fun vibrateImpl(lengthMs: Long) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    lengthMs,
+                    VibrationEffect.DEFAULT_AMPLITUDE
                 )
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(lengthMs)
-            }
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(lengthMs)
         }
     }
 

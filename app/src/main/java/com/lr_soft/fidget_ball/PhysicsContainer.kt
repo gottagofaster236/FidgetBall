@@ -15,12 +15,14 @@ import java.util.concurrent.CopyOnWriteArrayList
 class PhysicsContainer(context: Context, val width: Int, val height: Int) {
     private val balls = CopyOnWriteArrayList<Ball>()
 
+    /**
+     * Balls that have not yet been released by the user.
+     */
     private var currentBalls = mutableMapOf<Int, Ball>()
 
     private val box = Box(
         bounds = RectF(0f, 0f, width.toFloat(), height.toFloat()),
         bounceCoefficient = 0.6f,
-        color = Color.BLACK
     )
 
     private val unit = (width + height) / 2
@@ -29,9 +31,14 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
 
     private val asyncVibrator = AsyncVibrator(context)
 
+    private var physicsTaskTimer: Timer? = null
+
+    private var lastPhysicsStepTime = 0L
+
     fun draw(canvas: Canvas) {
         // Make a copy of the list to avoid locking twice.
         val balls = balls.toList()
+
         for (ball in balls) {
             ball.drawBackground(canvas)
         }
@@ -39,8 +46,6 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
             ball.drawForeground(canvas)
         }
     }
-
-    private var physicsTaskTimer: Timer? = null
 
     fun startPhysics() {
         stopPhysics()
@@ -65,8 +70,6 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         asyncVibrator.stop()
     }
 
-    private var lastPhysicsStepTime = 0L
-
     private fun physicsStep() {
         val currentTime = SystemClock.uptimeMillis()
         val timeSinceLastStep = (currentTime - lastPhysicsStepTime) / 1000f
@@ -74,7 +77,7 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
 
         balls.filter(Ball::applyPhysics).forEachIndexed { index, ball ->
             val vibrateOnCollision =
-                (index < MAX_BALLS_VIBRATING / 2 || balls.lastIndex - index < MAX_BALLS_VIBRATING / 2)
+                (index < MAX_BALLS_VIBRATING_AT_ONCE / 2 || balls.lastIndex - index < MAX_BALLS_VIBRATING_AT_ONCE / 2)
                     && ball.collisionCount < MAX_VIBRATIONS_PER_BALL
             ball.physicsStep(timeSinceLastStep, vibrateOnCollision)
             if (ball.shouldBeDeleted()) {
@@ -108,7 +111,7 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         if (vibrateOnCollision) {
             val velocityDifference = (velocity - oldVelocity).length() / unit
             if (velocityDifference >= VELOCITY_DIFFERENCE_VIBRATION_THRESHOLD) {
-                asyncVibrator.vibrate(VIBRATION_LENGTH)
+                asyncVibrator.vibrate(VIBRATION_LENGTH_MS)
                 collisionCount++
             }
         }
@@ -165,8 +168,8 @@ class PhysicsContainer(context: Context, val width: Int, val height: Int) {
         const val GRAVITY_ACCELERATION = 3f
         const val BALL_RADIUS = 0.045f
         const val VELOCITY_DIFFERENCE_VIBRATION_THRESHOLD = 1f
-        const val VIBRATION_LENGTH = 30L
-        const val MAX_BALLS_VIBRATING = 10
+        const val VIBRATION_LENGTH_MS = 30L
+        const val MAX_BALLS_VIBRATING_AT_ONCE = 10
         const val MAX_VIBRATIONS_PER_BALL = 10
     }
 }
