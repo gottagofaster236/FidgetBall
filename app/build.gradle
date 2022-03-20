@@ -11,8 +11,8 @@ android {
         applicationId "com.lr_soft.fidget_ball"
         minSdkVersion 16
         targetSdkVersion 31
-        versionCode 3
-        versionName "1.1"
+        versionCode 4
+        versionName "1.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
